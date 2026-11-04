@@ -1,5 +1,5 @@
 /**
- * CREATORDOCK VIEWFINDER - PRO ENGINE v2.0
+ * CREATORDOCK VIEWFINDER - PRO ENGINE v2.1
  * Dioptimalkan untuk stabilitas iOS/Android & Fitur Broadcast Profesional
  */
 
@@ -18,8 +18,9 @@ let ctx = null;
 let animationFrameId;
 
 // Variabel untuk Level Horizon (Gyroscope)
-let currentBeta = 0; // Kemiringan depan-belakang
-let currentGamma = 0; // Kemiringan kiri-kanan
+let currentBeta = 0; 
+let currentGamma = 0; 
+let isGyroActive = false; // Penanda apakah sensor gyro berhasil diakses
 
 async function initCamera() {
     streamVideo = document.getElementById('rawVideo');
@@ -38,8 +39,14 @@ async function initCamera() {
         await streamVideo.play();
         
         setupCanvasDimensions();
+        
+        // PENTING: Render kamera DIMULAI DULUAN sebelum mencoba sensor gyro
         startLiveViewRendering();
+        
+        // Mencoba mengaktifkan gyroscope (jika gagal/diblokir, aplikasi tetap jalan)
         initGyroscope();
+        
+        // Mengambil lokasi GPS
         getUserCurrentLocation();
 
     } catch (err) {
@@ -74,14 +81,19 @@ function setupCanvasDimensions() {
 // Fungsi mengaktifkan sensor Gyroscope HP untuk Level Horizon
 function initGyroscope() {
     if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', (event) => {
-            // Beta (x-axis): -180 to 180 (depan belakang)
-            // Gamma (y-axis): -90 to 90 (kiri kanan)
-            if (event.beta !== null && event.gamma !== null) {
-                currentBeta = event.beta;
-                currentGamma = event.gamma;
-            }
-        });
+        // Mencegah error jika browser memblokir sensor
+        try {
+            window.addEventListener('deviceorientation', (event) => {
+                if (event.beta !== null && event.gamma !== null) {
+                    currentBeta = event.beta;
+                    currentGamma = event.gamma;
+                    isGyroActive = true;
+                }
+            });
+        } catch (e) {
+            console.warn("Sensor gyroscope tidak diizinkan oleh browser.");
+            isGyroActive = false;
+        }
     }
 }
 
@@ -112,20 +124,16 @@ function startLiveViewRendering() {
             ctx.drawImage(streamVideo, srcX, srcY, srcW, srcH, destX, destY, destW, destH);
 
             // --- FITUR PROFESIONAL: LEVEL HORIZON (WATERPASS) ---
-            // Hanya tampil jika HP dalam posisi landscape (gamma > 45 atau < -45)
-            if (Math.abs(currentGamma) > 45) {
-                // Menghitung sudut kemiringan (roll)
+            // Hanya tampil jika sensor gyro aktif dan HP dalam posisi landscape
+            if (isGyroActive && Math.abs(currentGamma) > 45) {
                 let angle = currentGamma;
                 if (currentGamma > 90) angle = 90;
                 if (currentGamma < -90) angle = -90;
 
-                // Menggambar garis level di tengah layar
                 ctx.save();
                 ctx.translate(canvasW / 2, canvasH / 2);
-                // Rotasi berdasarkan sudut HP (dikonversi ke radian)
                 ctx.rotate((angle * Math.PI) / 180);
 
-                // Jika sudut mendekati 0 (datar), warna HIJAU, jika miring, warna PUTIH
                 const isLevel = Math.abs(angle) < 1.5; 
                 ctx.strokeStyle = isLevel ? "#22c55e" : "rgba(255, 255, 255, 0.8)";
                 ctx.lineWidth = Math.max(2, 3 * window.devicePixelRatio);
