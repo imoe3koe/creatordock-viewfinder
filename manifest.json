@@ -1,0 +1,23 @@
+
+{
+  "short_name": "CD Viewfinder",
+  "name": "CreatorDock Digital Viewfinder Pro",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/index.html",
+"background_color": "#020617",
+  "theme_color": "#020617",
+  "display": "standalone",
+  "orientation": "landscape",
+  "prefer_related_applications": false
+}
