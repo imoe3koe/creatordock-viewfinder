@@ -136,7 +136,7 @@
         </div>
     </div>
 
-    <!-- FILE EXTERNAL PENDUKUNG -->
+    <!-- FILE EXTERNAL PENDUKUNG (Gunakan Relative Path) -->
     <script src="app.js"></script>
     <script src="local-render.js"></script>
     <script src="sync.js"></script>
@@ -151,10 +151,12 @@
                 btn.className = "cam-chip px-4 py-1.5 rounded-full text-[11px] font-bold border border-slate-700 bg-slate-900 text-slate-300 transition-colors cursor-pointer";
             });
             el.className = "cam-chip active px-4 py-1.5 rounded-full text-[11px] font-bold border border-amber-500 bg-amber-500 text-slate-950 transition-colors cursor-pointer";
-            document.getElementById('camDisplay').innerText = name.toUpperCase();
             
-            // Injeksi data sensor langsung ke variabel app.js
-            if (typeof targetCamera !== 'undefined') {
+            const camDisplay = document.getElementById('camDisplay');
+            if (camDisplay) camDisplay.innerText = name.toUpperCase();
+            
+            // Injeksi data sensor langsung ke variabel app.js (Cek Keberadaan Variabel)
+            if (typeof targetCamera !== 'undefined' && targetCamera !== null) {
                 targetCamera.brand = name.split(' ')[0];
                 targetCamera.model = name.split(' ').slice(1).join(' ');
                 targetCamera.sensorWidth = width;
@@ -169,17 +171,19 @@
             });
             el.className = "btn-lens active px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-amber-500 text-slate-950 border border-amber-400 cursor-pointer";
             
-            if (typeof activeLens !== 'undefined') {
-                activeLens = mm;
+            if (typeof window.activeLens !== 'undefined') {
+                window.activeLens = mm;
             }
         }
 
         // 4. Registrasi PWA (Aplikasi Offline)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(err => console.error('Pendaftaran SW gagal:', err));
+                // Service worker tetap butuh absolute path scope atau minimal ./sw.js
+                navigator.serviceWorker.register('./sw.js').catch(err => console.error('Pendaftaran SW gagal:', err));
             });
         }
     </script>
+    
 </body>
 </html>
