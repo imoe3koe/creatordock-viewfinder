@@ -26,11 +26,11 @@ let activeLens = 35;       // Bawaan 35mm Prime
 let targetAspectRatio = 2.39; // Aspek Rasio Sinematik (2.39:1 Anamorphic Top/Bottom Mask)
 let showRuleOfThirds = true;
 
-// 4. Inisialisasi Akses Kamera Belakang Ponsel (WebRTC API)
+// 4. Inisialisasi Akses Kamera WebRTC API
 async function initCamera() {
-    const constraints = {
+    const mobileConstraints = {
         video: {
-            facingMode: { exact: "environment" }, // Memaksa browser menggunakan kamera belakang
+            facingMode: { exact: "environment" },
             width: { ideal: 1920 },
             height: { ideal: 1080 }
         },
@@ -38,18 +38,44 @@ async function initCamera() {
     };
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const stream = await navigator.mediaDevices.getUserMedia(mobileConstraints);
         streamVideo.srcObject = stream;
         streamVideo.addEventListener('loadedmetadata', () => {
             setupCanvasDimensions();
             startLiveViewRendering();
         });
     } catch (err) {
-        console.error("Gagal mengakses kamera belakang utama: ", err);
-        alert("Aplikasi memerlukan akses kamera belakang. Silakan periksa izin browser Anda.");
-        
-        // Cadangan jika kamera belakang spesifik (environment) gagal di desktop/emulator
+        console.warn("Kamera belakang (environment) tidak ditemukan. Beralih ke kamera default PC.");
         fallbackCamera();
+    }
+}
+
+async function fallbackCamera() {
+    // Parameter umum yang kompatibel dengan semua jenis perangkat (webcam laptop/PC)
+    const pcConstraints = {
+        video: {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+        },
+        audio: false
+    };
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia(pcConstraints);
+        streamVideo.srcObject = stream;
+        streamVideo.addEventListener('loadedmetadata', () => {
+            setupCanvasDimensions();
+            startLiveViewRendering();
+        });
+    } catch (e) {
+        console.error("Kamera cadangan gagal diakses. Pastikan browser memiliki izin kamera.", e);
+        // Gambar peringatan teks visual ke dalam kanvas jika webcam rusak/diblokir
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        ctx.fillStyle = "#ef4444";
+        ctx.font = "18px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Izin Kamera Ditolak / Tidak Ditemukan", previewCanvas.width/2, previewCanvas.height/2);
     }
 }
 
